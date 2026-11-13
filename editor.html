@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talon IT Solutions — Deployment Manager</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans, Space Grotesk, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            ivory: '#F8F7F2',
+                            white: '#FFFFFF',
+                            stone: '#E8E5DE',
+                            grey: '#92938E',
+                            slate: '#46535C',
+                            taupe: '#B6AA98',
+                            silver: '#D8DADF',
+                            dark: '#1C2226'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F8F7F2;
+            color: #1C2226;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        ::selection {
+            background-color: #B6AA98;
+            color: #FFFFFF;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D8DADF;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #B6AA98;
+        }
+
+        /* Dark Code Block Scrollbar */
+        .code-scroll::-webkit-scrollbar-thumb {
+            background: #46535C;
+        }
+        .code-scroll::-webkit-scrollbar-thumb:hover {
+            background: #B6AA98;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lg:h-screen lg:overflow-hidden">
+
+    <!-- TOP NAVIGATION & SYNC BAR -->
+    <header class="bg-brand-white border-b border-brand-stone px-4 sm:px-6 h-16 flex items-center justify-between shrink-0 z-30">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 bg-brand-dark text-brand-ivory rounded-xl flex items-center justify-center font-display font-bold shadow-sm">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-display font-bold text-base tracking-tight uppercase text-brand-dark">TALON IT</span>
+                    <span class="px-2 py-0.5 rounded-md bg-brand-ivory border border-brand-stone font-mono text-[10px] font-semibold text-brand-slate uppercase">Deployment Utility</span>
+                </div>
+                <p class="text-[11px] text-brand-grey hidden sm:block">Visual PROJECTS_DATA Snippet Generator for <code class="text-brand-slate font-mono">pro.html</code></p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <div id="sync-status-badge" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-brand-ivory border border-brand-stone text-xs font-mono text-brand-slate">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span id="configured-count-header">0 / 30 Configured</span>
+            </div>
+
+            <button onclick="toggleSyncDrawer()" class="inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-brand-ivory hover:bg-brand-stone/60 border border-brand-stone text-xs font-semibold text-brand-dark transition-all">
+                <svg class="w-4 h-4 text-brand-slate" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <span>Sync Existing <code class="font-mono text-[11px]">pro.html</code></span>
+            </button>
+
+            <button onclick="resetAllStorage()" title="Reset all slots to default placeholders" class="p-2 rounded-xl bg-brand-white hover:bg-red-50 border border-brand-stone hover:border-red-200 text-brand-grey hover:text-red-600 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- COLLAPSIBLE SYNC DRAWER -->
+    <div id="sync-drawer" class="hidden bg-brand-white border-b border-brand-stone shadow-lg z-20 transition-all">
+        <div class="max-w-5xl mx-auto p-6">
+            <div class="flex items-start justify-between mb-3">
+                <div>
+                    <h2 class="font-display font-bold text-base text-brand-dark">Sync Existing <code class="font-mono text-sm bg-brand-ivory px-1.5 py-0.5 rounded border border-brand-stone">pro.html</code> / <code class="font-mono text-sm bg-brand-ivory px-1.5 py-0.5 rounded border border-brand-stone">PROJECTS_DATA</code></h2>
+                    <p class="text-xs text-brand-slate mt-1">Paste your entire <code class="font-mono">pro.html</code> file or just the <code class="font-mono">const PROJECTS_DATA = [ ... ];</code> array below. Already configured projects will be preserved and marked as <strong>DEPLOYED</strong>.</p>
+                </div>
+                <button onclick="toggleSyncDrawer()" class="p-1.5 rounded-lg text-brand-grey hover:text-brand-dark hover:bg-brand-ivory">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <textarea id="sync-textarea" rows="6" placeholder="Paste your pro.html source code or const PROJECTS_DATA = [ ... ]; array here..." class="w-full rounded-xl bg-brand-ivory border border-brand-stone focus:border-brand-taupe focus:ring-2 focus:ring-brand-taupe/20 outline-none p-3.5 font-mono text-xs text-brand-dark"></textarea>
+
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                <span id="sync-feedback" class="text-xs font-mono text-brand-slate"></span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="toggleSyncDrawer()" class="px-4 py-2 rounded-xl bg-brand-ivory border border-brand-stone text-xs font-semibold text-brand-slate hover:text-brand-dark">Cancel</button>
+                    <button onclick="parseAndLoadCode()" class="px-5 py-2 rounded-xl bg-brand-dark hover:bg-brand-slate text-brand-ivory text-xs font-semibold shadow-sm transition-all">Load Existing Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN 3-COLUMN WORKSPACE -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 lg:overflow-hidden">
+
+        <!-- ===============================================================
+             LEFT PANEL: PROJECT SLOT SELECTOR (01 - 30)
+             =============================================================== -->
+        <aside class="lg:col-span-3 bg-brand-white border-b lg:border-b-0 lg:border-r border-brand-stone flex flex-col lg:h-full lg:overflow-hidden">
+            <div class="p-4 border-b border-brand-stone space-y-3 shrink-0">
+                <div class="flex items-center justify-between">
+                    <span class="font-display font-bold text-xs uppercase tracking-wider text-brand-slate">Project Slots (01 — 30)</span>
+                    <span class="font-mono text-[11px] text-brand-grey" id="sidebar-stats">0 Deployed</span>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative">
+                    <svg class="w-4 h-4 text-brand-grey absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input type="text" id="slot-search" oninput="renderSlotList()" placeholder="Search slot # or title..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-brand-ivory border border-brand-stone focus:border-brand-taupe outline-none text-xs text-brand-dark placeholder:text-brand-grey">
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="grid grid-cols-3 gap-1.5 bg-brand-ivory p-1 rounded-xl border border-brand-stone">
+                    <button onclick="setFilter('all')" id="filter-all" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-brand-dark text-brand-ivory transition-all">All (30)</button>
+                    <button onclick="setFilter('empty')" id="filter-empty" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold text-brand-slate hover:text-brand-dark transition-all">Empty</button>
+                    <button onclick="setFilter('configured')" id="filter-configured" class="py-1.5 px-2 rounded-lg text-[11px] font-semibold text-brand-slate hover:text-brand-dark transition-all">Deployed</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Project Slot List -->
+            <div id="slot-list-container" class="flex-1 overflow-y-auto p-3 space-y-1.5 max-h-72 lg:max-h-none">
+                <!-- Populated dynamically -->
+            </div>
+        </aside>
+
+        <!-- ===============================================================
+             CENTER PANEL: VISUAL DEPLOYMENT FORM & IMAGE PICKER
+             =============================================================== -->
+        <main class="lg:col-span-5 bg-brand-ivory flex flex-col lg:h-full lg:overflow-hidden border-b lg:border-b-0 lg:border-r border-brand-stone">
+            <!-- Editor Header -->
+            <div class="px-6 py-4 bg-brand-white/80 backdrop-blur-sm border-b border-brand-stone flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-3">
+                    <span id="editor-slot-badge" class="px-2.5 py-1 rounded-lg bg-brand-dark text-brand-ivory font-mono text-xs font-bold">01</span>
+                    <div>
+                        <h1 class="font-display font-bold text-base text-brand-dark leading-tight" id="editor-heading">Project Title Placeholder [01]</h1>
+                        <p class="text-[11px] font-mono text-brand-slate">Configure metadata & screenshot paths</p>
+                    </div>
+                </div>
+                <button onclick="clearCurrentProject()" class="px-3 py-1.5 rounded-lg bg-brand-ivory hover:bg-red-50 border border-brand-stone hover:border-red-200 text-[11px] font-semibold text-brand-slate hover:text-red-600 transition-colors">
+                    Reset Slot
+                </button>
+            </div>
+
+            <!-- Scrollable Form Body -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+                <!-- 1. Project Metadata Card -->
+                <section class="bg-brand-white rounded-2xl border border-brand-stone p-5 space-y-4 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-brand-stone/70 pb-2.5">
+                        <span class="font-display font-bold text-xs uppercase tracking-wider text-brand-dark">1. Project Metadata</span>
+                        <span id="editor-status-pill" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-brand-ivory text-brand-slate border border-brand-stone">EMPTY PLACEHOLDER</span>
+                    </div>
+
+                    <!-- Title Input -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1.5">Project Title (<code class="font-mono text-brand-slate">title</code>)</label>
+                        <input type="text" id="input-title" oninput="updateCurrentField('title', this.value)" placeholder="e.g. TalonFX Algorithmic Trading Portal" class="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-stone focus:border-brand-taupe focus:bg-brand-white outline-none text-sm font-medium text-brand-dark transition-all">
+                    </div>
+
+                    <!-- Category Input + Preset Chips -->
+                    <div>
+                        <label class="block text-xs font-semibold text-brand-dark mb-1.5">Project Category (<code class="font-mono text-brand-slate">category</code>)</label>
+                        <input type="text" id="input-category" oninput="updateCurrentField('category', this.value)" placeholder="Web Application" class="w-full px-3.5 py-2 rounded-xl bg-brand-ivory border border-brand-stone focus:border-brand-taupe focus:bg-brand-white outline-none text-sm text-brand-dark transition-all">
+                        
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <button type="button" onclick="setCategoryPreset('Web Application')" class="px-2.5 py-1 rounded-lg bg-brand-ivory hover:bg-brand-stone/70 border border-brand-stone text-[11px] font-medium text-brand-slate hover:text-brand-dark transition-colors">Web Application</button>
+                            <button type="button" onclick="setCategoryPreset('E-Commerce Platform')" class="px-2.5 py-1 rounded-lg bg-brand-ivory hover:bg-brand-stone/70 border border-brand-stone text-[11px] font-medium text-brand-slate hover:text-brand-dark transition-colors">E-Commerce Platform</button>
+                            <button type="button" onclick="setCategoryPreset('FinTech / Algorithmic Trading')" class="px-2.5 py-1 rounded-lg bg-brand-ivory hover:bg-brand-stone/70 border border-brand-stone text-[11px] font-medium text-brand-slate hover:text-brand-dark transition-colors">FinTech / Algorithmic Trading</button>
+                            <button type="button" onclick="setCategoryPreset('Custom Infrastructure')" class="px-2.5 py-1 rounded-lg bg-brand-ivory hover:bg-brand-stone/70 border border-brand-stone text-[11px] font-medium text-brand-slate hover:text-brand-dark transition-colors">Custom Infrastructure</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. Smart Path & Cover Image Card -->
+                <section class="bg-brand-white rounded-2xl border border-brand-stone p-5 space-y-4 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-stone/70 pb-2.5">
+                        <span class="font-display font-bold text-xs uppercase tracking-wider text-brand-dark">2. Cover Thumbnail (<code class="font-mono lowercase">coverImage</code>)</span>
+                        
+                        <!-- Base Folder Prefix Helper -->
+                        <div class="flex items-center space-x-1.5 bg-brand-ivory px-2.5 py-1 rounded-lg border border-brand-stone">
+                            <span class="text-[10px] font-mono font-semibold text-brand-slate">Folder Prefix:</span>
+                            <input type="text" id="base-prefix-input" value="images/" oninput="savePrefix(this.value)" class="w-24 bg-transparent font-mono text-[11px] font-bold text-brand-dark focus:outline-none border-b border-brand-taupe">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                        <!-- Live Cover Preview Box -->
+                        <div class="w-full sm:w-36 aspect-[16/10] rounded-xl bg-brand-ivory border border-brand-stone overflow-hidden flex items-center justify-center shrink-0 relative">
+                            <img id="cover-preview-img" src="" alt="Cover Preview" class="hidden w-full h-full object-cover">
+                            <div id="cover-preview-placeholder" class="text-center p-2">
+                                <svg class="w-5 h-5 mx-auto text-brand-grey mb-1" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                <span class="block font-mono text-[9px] text-brand-grey">NO COVER</span>
+                            </div>
+                        </div>
+
+                        <!-- Cover Path Input + Local File Picker -->
+                        <div class="flex-1 w-full space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <input type="text" id="input-cover" oninput="updateCoverPath(this.value)" placeholder="images/project-01-cover.jpg" class="flex-1 px-3 py-2 rounded-xl bg-brand-ivory border border-brand-stone focus:border-brand-taupe focus:bg-brand-white outline-none font-mono text-xs text-brand-dark">
+                                <button type="button" onclick="clearCover()" title="Clear cover image" class="p-2 rounded-xl bg-brand-ivory hover:bg-red-50 border border-brand-stone text-brand-grey hover:text-red-600 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <label class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-brand-dark hover:bg-brand-slate text-brand-ivory text-xs font-semibold cursor-pointer transition-colors shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                    </svg>
+                                    <span>Browse Local Image</span>
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleCoverFileSelect(this)">
+                                </label>
+                                <span class="text-[10px] font-mono text-brand-grey">Auto-prefixes filename</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. 10-Slot Gallery Reel Card -->
+                <section class="bg-brand-white rounded-2xl border border-brand-stone p-5 space-y-4 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-brand-stone/70 pb-3">
+                        <div>
+                            <span class="font-display font-bold text-xs uppercase tracking-wider text-brand-dark block">3. 10-Slide Gallery Reel (<code class="font-mono lowercase">images[0..9]</code>)</span>
+                            <span class="text-[11px] text-brand-grey">Select individually or batch upload up to 10 screenshots at once</span>
+                        </div>
+
+                        <!-- Batch Upload Button -->
+                        <label class="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-brand-taupe/20 hover:bg-brand-taupe/35 border border-brand-taupe text-brand-dark text-xs font-bold cursor-pointer transition-all">
+                            <svg class="w-4 h-4 text-brand-dark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span>Batch Upload (Up to 10)</span>
+                            <input type="file" accept="image/*" multiple class="hidden" onchange="handleBatchImageSelect(this)">
+                        </label>
+                    </div>
+
+                    <!-- 10 Image Rows Container -->
+                    <div id="gallery-slots-container" class="space-y-2.5">
+                        <!-- Dynamically rendered 10 slots -->
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- ===============================================================
+             RIGHT PANEL: ISOLATED VS CODE SNIPPET GENERATOR
+             =============================================================== -->
+        <aside class="lg:col-span-4 bg-brand-dark text-brand-ivory flex flex-col lg:h-full lg:overflow-hidden">
+            <!-- Code Header -->
+            <div class="px-5 py-4 border-b border-brand-slate/60 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-2.5">
+                    <div class="flex space-x-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-400/80"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span>
+                    </div>
+                    <span class="font-mono text-xs font-semibold text-brand-silver" id="code-panel-filename">PROJECT // 01</span>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-brand-slate/40 border border-brand-slate font-mono text-[10px] text-brand-taupe">VS Code Ready</span>
+            </div>
+
+            <!-- Instruction Helper Banner -->
+            <div class="px-5 py-2.5 bg-brand-slate/25 border-b border-brand-slate/50 text-[11px] text-brand-silver flex items-center justify-between shrink-0">
+                <span>Highlight <code class="text-brand-taupe font-mono" id="helper-comment-hint">// --- PROJECT 01 ---</code> in <code class="font-mono">pro.html</code> & paste over it.</span>
+            </div>
+
+            <!-- Syntax-Highlighted Code Output Stage -->
+            <div class="flex-1 overflow-auto p-5 code-scroll font-mono text-xs leading-relaxed">
+                <pre id="code-output-pre" class="whitespace-pre select-all"></pre>
+            </div>
+
+            <!-- Primary Copy Action Footer -->
+            <div class="p-4 bg-brand-dark border-t border-brand-slate/60 space-y-2.5 shrink-0">
+                <button onclick="copySingleSnippet()" id="btn-copy-single" class="w-full py-3 px-4 rounded-xl bg-brand-taupe hover:bg-brand-taupe/90 text-brand-dark font-display font-bold text-sm flex items-center justify-center space-x-2 shadow-lg transition-all active:scale-[0.99]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                    </svg>
+                    <span id="btn-copy-single-text">Copy Single Project Block</span>
+                </button>
+
+                <button onclick="copyFullArray()" id="btn-copy-full" class="w-full py-2.5 px-4 rounded-xl bg-brand-slate/35 hover:bg-brand-slate/55 border border-brand-slate text-brand-ivory font-mono text-xs font-semibold flex items-center justify-center space-x-2 transition-all">
+                    <svg class="w-3.5 h-3.5 text-brand-taupe" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                    </svg>
+                    <span id="btn-copy-full-text">Copy Full PROJECTS_DATA Array (All 30)</span>
+                </button>
+            </div>
+        </aside>
+
+    </div>
+
+    <script>
+        // =====================================================================
+        // STATE MANAGEMENT & INITIALIZATION
+        // =====================================================================
+        const STORAGE_KEY = 'talon_it_deployments_v1';
+        const PREFIX_STORAGE_KEY = 'talon_it_folder_prefix_v1';
+
+        let projectsState = [];
+        let activeProjectId = 1;
+        let currentFilter = 'all';
+        let baseFolderPrefix = 'images/';
+
+        // Ephemeral in-memory map of ObjectURLs for instant local image previews
+        // Structure: { "1-cover": "blob:...", "1-img-0": "blob:..." }
+        const sessionBlobPreviews = {};
+
+        function padNum(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function createDefaultProjects() {
+            return Array.from({ length: 30 }, (_, i) => {
+                const id = i + 1;
+                return {
+                    id,
+                    title: `Project Title Placeholder [${padNum(id)}]`,
+                    category: "Web Application",
+                    coverImage: "",
+                    images: ["", "", "", "", "", "", "", "", "", ""]
+                };
+            });
+        }
+
+        function isProjectConfigured(project) {
+            const defaultTitle = `Project Title Placeholder [${padNum(project.id)}]`;
+            const hasCustomTitle = project.title.trim() !== "" && project.title.trim() !== defaultTitle;
+            const hasCover = project.coverImage && project.coverImage.trim() !== "";
+            const hasImages = Array.isArray(project.images) && project.images.some(img => img && img.trim() !== "");
+            return hasCustomTitle || hasCover || hasImages;
+        }
+
+        function loadState() {
+            const savedPrefix = localStorage.getItem(PREFIX_STORAGE_KEY);
+            if (savedPrefix !== null) {
+                baseFolderPrefix = savedPrefix;
+            }
+            document.getElementById('base-prefix-input').value = baseFolderPrefix;
+
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (Array.isArray(parsed) && parsed.length === 30) {
+                        projectsState = parsed;
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse saved deployment state, using defaults.');
+                }
+            }
+            projectsState = createDefaultProjects();
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(projectsState));
+            updateGlobalCounters();
+        }
+
+        function savePrefix(val) {
+            baseFolderPrefix = val;
+            localStorage.setItem(PREFIX_STORAGE_KEY, val);
+        }
+
+        function resetAllStorage() {
+            if (!confirm('Reset all 30 project slots back to empty placeholders? This clears your saved browser state.')) return;
+            projectsState = createDefaultProjects();
+            Object.keys(sessionBlobPreviews).forEach(k => delete sessionBlobPreviews[k]);
+            saveState();
+            renderAll();
+        }
+
+        // =====================================================================
+        // SYNC / PARSE EXISTING PRO.HTML CODE
+        // =====================================================================
+        function toggleSyncDrawer() {
+            const drawer = document.getElementById('sync-drawer');
+            drawer.classList.toggle('hidden');
+            document.getElementById('sync-feedback').innerText = '';
+        }
+
+        function parseAndLoadCode() {
+            const rawInput = document.getElementById('sync-textarea').value.trim();
+            const feedbackEl = document.getElementById('sync-feedback');
+
+            if (!rawInput) {
+                feedbackEl.innerText = 'Please paste your pro.html code or PROJECTS_DATA array first.';
+                feedbackEl.className = 'text-xs font-mono text-red-600';
+                return;
+            }
+
+            try {
+                // Extract the array literal starting from const PROJECTS_DATA = [ ... ]
+                let arrayCode = rawInput;
+                const declMatch = rawInput.match(/const\s+PROJECTS_DATA\s*=\s*(\[[\s\S]*?\])\s*;/);
+                if (declMatch && declMatch[1]) {
+                    arrayCode = declMatch[1];
+                } else {
+                    // Fallback: grab first '[' to matching closing ']'
+                    const firstBracket = rawInput.indexOf('[');
+                    const lastBracket = rawInput.lastIndexOf(']');
+                    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+                        arrayCode = rawInput.slice(firstBracket, lastBracket + 1);
+                    }
+                }
+
+                // Safely evaluate the JS array literal (handles comments and trailing commas naturally)
+                const parsedArray = (new Function(`"use strict"; return (${arrayCode});`))();
+
+                if (!Array.isArray(parsedArray)) {
+                    throw new Error('Parsed output is not an array.');
+                }
+
+                const baseDefaults = createDefaultProjects();
+                let importedCount = 0;
+
+                parsedArray.forEach((item, index) => {
+                    if (!item || typeof item !== 'object') return;
+                    const targetId = Number(item.id) || (index + 1);
+                    if (targetId >= 1 && targetId <= 30) {
+                        const normalizedImages = Array.isArray(item.images) ? item.images.slice(0, 10) : [];
+                        while (normalizedImages.length < 10) normalizedImages.push("");
+
+                        baseDefaults[targetId - 1] = {
+                            id: targetId,
+                            title: typeof item.title === 'string' ? item.title : `Project Title Placeholder [${padNum(targetId)}]`,
+                            category: typeof item.category === 'string' ? item.category : "Web Application",
+                            coverImage: typeof item.coverImage === 'string' ? item.coverImage : "",
+                            images: normalizedImages.map(img => (typeof img === 'string' ? img : ""))
+                        };
+
+                        if (isProjectConfigured(baseDefaults[targetId - 1])) {
+                            importedCount++;
+                        }
+                    }
+                });
+
+                projectsState = baseDefaults;
+                saveState();
+                renderAll();
+
+                feedbackEl.innerText = `Success! Synced 30 slots (${importedCount} configured projects detected).`;
+                feedbackEl.className = 'text-xs font-mono text-emerald-600 font-semibold';
+
+                setTimeout(() => {
+                    document.getElementById('sync-drawer').classList.add('hidden');
+                    document.getElementById('sync-textarea').value = '';
+                }, 1200);
+
+            } catch (err) {
+                console.error(err);
+                feedbackEl.innerText = 'Could not parse PROJECTS_DATA. Make sure you copied the full PROJECTS_DATA array or pro.html file.';
+                feedbackEl.className = 'text-xs font-mono text-red-600';
+            }
+        }
+
+        // =====================================================================
+        // LEFT SIDEBAR: SLOT LIST RENDERING & FILTERING
+        // =====================================================================
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'empty', 'configured'].forEach(key => {
+                const btn = document.getElementById(`filter-${key}`);
+                if (key === filter) {
+                    btn.className = 'py-1.5 px-2 rounded-lg text-[11px] font-semibold bg-brand-dark text-brand-ivory transition-all';
+                } else {
+                    btn.className = 'py-1.5 px-2 rounded-lg text-[11px] font-semibold text-brand-slate hover:text-brand-dark transition-all';
+                }
+            });
+            renderSlotList();
+        }
+
+        function selectProject(id) {
+            activeProjectId = id;
+            renderSlotList();
+            renderEditor();
+            renderCodeOutput();
+        }
+
+        function updateGlobalCounters() {
+            const configuredCount = projectsState.filter(isProjectConfigured).length;
+            document.getElementById('configured-count-header').innerText = `${configuredCount} / 30 Configured`;
+            document.getElementById('sidebar-stats').innerText = `${configuredCount} Deployed`;
+        }
+
+        function renderSlotList() {
+            const container = document.getElementById('slot-list-container');
+            const query = document.getElementById('slot-search').value.toLowerCase().trim();
+
+            const filtered = projectsState.filter(p => {
+                const configured = isProjectConfigured(p);
+                if (currentFilter === 'empty' && configured) return false;
+                if (currentFilter === 'configured' && !configured) return false;
+
+                if (query) {
+                    const numStr = padNum(p.id);
+                    return numStr.includes(query) || p.title.toLowerCase().includes(query) || p.category.toLowerCase().includes(query);
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-xs text-brand-grey font-mono">
+                        No project slots match your filter.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const isActive = p.id === activeProjectId;
+                const configured = isProjectConfigured(p);
+                const numStr = padNum(p.id);
+                const imgCount = p.images.filter(i => i.trim() !== '').length;
+
+                return `
+                    <button onclick="selectProject(${p.id})" class="w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between gap-2 ${
+                        isActive 
+                        ? 'bg-brand-dark text-brand-ivory border-brand-dark shadow-sm' 
+                        : 'bg-brand-ivory/60 hover:bg-brand-white text-brand-dark border-brand-stone/80'
+                    }">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center space-x-2">
+                                <span class="font-mono text-[11px] font-bold ${isActive ? 'text-brand-taupe' : 'text-brand-slate'}">PROJECT // ${numStr}</span>
+                                ${configured 
+                                    ? `<span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase ${isActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'bg-emerald-100 text-emerald-800'}">DEPLOYED</span>`
+                                    : `<span class="px-1.5 py-0.2 rounded text-[9px] font-mono uppercase ${isActive ? 'bg-brand-slate/40 text-brand-silver' : 'bg-brand-stone/70 text-brand-slate'}">EMPTY</span>`
+                                }
+                            </div>
+                            <p class="text-xs font-semibold truncate mt-1 ${isActive ? 'text-brand-white' : 'text-brand-dark'}">${escapeHtml(p.title)}</p>
+                        </div>
+                        <span class="font-mono text-[10px] shrink-0 px-2 py-1 rounded-lg ${isActive ? 'bg-brand-slate/40 text-brand-silver' : 'bg-brand-white border border-brand-stone text-brand-grey'}">
+                            ${imgCount}/10
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // =====================================================================
+        // CENTER EDITOR: FORM & IMAGE PICKER HANDLERS
+        // =====================================================================
+        function getCurrentProject() {
+            return projectsState[activeProjectId - 1];
+        }
+
+        function updateCurrentField(field, value) {
+            const proj = getCurrentProject();
+            proj[field] = value;
+            saveState();
+
+            if (field === 'title') {
+                document.getElementById('editor-heading').innerText = value || `Project Title Placeholder [${padNum(proj.id)}]`;
+            }
+
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+        }
+
+        function setCategoryPreset(cat) {
+            document.getElementById('input-category').value = cat;
+            updateCurrentField('category', cat);
+        }
+
+        function updateEditorStatusBadge() {
+            const proj = getCurrentProject();
+            const pill = document.getElementById('editor-status-pill');
+            if (isProjectConfigured(proj)) {
+                pill.innerText = 'DEPLOYED';
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200';
+            } else {
+                pill.innerText = 'EMPTY PLACEHOLDER';
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-brand-ivory text-brand-slate border border-brand-stone';
+            }
+        }
+
+        // Cover Image Handlers
+        function updateCoverPath(path) {
+            const proj = getCurrentProject();
+            proj.coverImage = path;
+            saveState();
+            updateCoverPreviewUI();
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+        }
+
+        function handleCoverFileSelect(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const prefix = document.getElementById('base-prefix-input').value;
+            const fullPath = `${prefix}${file.name}`;
+
+            const blobKey = `${activeProjectId}-cover`;
+            if (sessionBlobPreviews[blobKey]) URL.revokeObjectURL(sessionBlobPreviews[blobKey]);
+            sessionBlobPreviews[blobKey] = URL.createObjectURL(file);
+
+            document.getElementById('input-cover').value = fullPath;
+            updateCoverPath(fullPath);
+            input.value = '';
+        }
+
+        function clearCover() {
+            const blobKey = `${activeProjectId}-cover`;
+            if (sessionBlobPreviews[blobKey]) {
+                URL.revokeObjectURL(sessionBlobPreviews[blobKey]);
+                delete sessionBlobPreviews[blobKey];
+            }
+            document.getElementById('input-cover').value = '';
+            updateCoverPath('');
+        }
+
+        function updateCoverPreviewUI() {
+            const proj = getCurrentProject();
+            const imgEl = document.getElementById('cover-preview-img');
+            const placeholderEl = document.getElementById('cover-preview-placeholder');
+            const blobKey = `${activeProjectId}-cover`;
+            const previewSrc = sessionBlobPreviews[blobKey] || proj.coverImage;
+
+            if (previewSrc && previewSrc.trim() !== '') {
+                imgEl.src = previewSrc;
+                imgEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+                imgEl.onerror = () => {
+                    imgEl.classList.add('hidden');
+                    placeholderEl.classList.remove('hidden');
+                };
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+        }
+
+        // 10-Slot Gallery Reel Handlers
+        function updateGallerySlotPath(slotIdx, path) {
+            const proj = getCurrentProject();
+            proj.images[slotIdx] = path;
+            saveState();
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+            updateSingleSlotThumbnail(slotIdx);
+        }
+
+        function handleSingleSlotFileSelect(slotIdx, input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const prefix = document.getElementById('base-prefix-input').value;
+            const fullPath = `${prefix}${file.name}`;
+
+            const blobKey = `${activeProjectId}-img-${slotIdx}`;
+            if (sessionBlobPreviews[blobKey]) URL.revokeObjectURL(sessionBlobPreviews[blobKey]);
+            sessionBlobPreviews[blobKey] = URL.createObjectURL(file);
+
+            const proj = getCurrentProject();
+            proj.images[slotIdx] = fullPath;
+            saveState();
+            renderGallerySlots();
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+            input.value = '';
+        }
+
+        function handleBatchImageSelect(input) {
+            if (!input.files || input.files.length === 0) return;
+            const files = Array.from(input.files).slice(0, 10);
+            const prefix = document.getElementById('base-prefix-input').value;
+            const proj = getCurrentProject();
+
+            files.forEach((file, idx) => {
+                const fullPath = `${prefix}${file.name}`;
+                proj.images[idx] = fullPath;
+
+                const blobKey = `${activeProjectId}-img-${idx}`;
+                if (sessionBlobPreviews[blobKey]) URL.revokeObjectURL(sessionBlobPreviews[blobKey]);
+                sessionBlobPreviews[blobKey] = URL.createObjectURL(file);
+            });
+
+            // Auto-populate cover image if currently empty
+            if (!proj.coverImage || proj.coverImage.trim() === '') {
+                proj.coverImage = proj.images[0];
+                const coverBlobKey = `${activeProjectId}-cover`;
+                sessionBlobPreviews[coverBlobKey] = sessionBlobPreviews[`${activeProjectId}-img-0`];
+                document.getElementById('input-cover').value = proj.coverImage;
+                updateCoverPreviewUI();
+            }
+
+            saveState();
+            renderGallerySlots();
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+            input.value = '';
+        }
+
+        function clearGallerySlot(slotIdx) {
+            const proj = getCurrentProject();
+            proj.images[slotIdx] = '';
+            const blobKey = `${activeProjectId}-img-${slotIdx}`;
+            if (sessionBlobPreviews[blobKey]) {
+                URL.revokeObjectURL(sessionBlobPreviews[blobKey]);
+                delete sessionBlobPreviews[blobKey];
+            }
+            saveState();
+            renderGallerySlots();
+            updateEditorStatusBadge();
+            renderSlotList();
+            renderCodeOutput();
+        }
+
+        function moveGallerySlot(slotIdx, direction) {
+            const targetIdx = slotIdx + direction;
+            if (targetIdx < 0 || targetIdx > 9) return;
+
+            const proj = getCurrentProject();
+            // Swap image strings
+            const tempPath = proj.images[slotIdx];
+            proj.images[slotIdx] = proj.images[targetIdx];
+            proj.images[targetIdx] = tempPath;
+
+            // Swap session blob previews
+            const keyA = `${activeProjectId}-img-${slotIdx}`;
+            const keyB = `${activeProjectId}-img-${targetIdx}`;
+            const tempBlob = sessionBlobPreviews[keyA];
+            sessionBlobPreviews[keyA] = sessionBlobPreviews[keyB];
+            sessionBlobPreviews[keyB] = tempBlob;
+
+            saveState();
+            renderGallerySlots();
+            renderCodeOutput();
+        }
+
+        function clearCurrentProject() {
+            const proj = getCurrentProject();
+            projectsState[activeProjectId - 1] = {
+                id: proj.id,
+                title: `Project Title Placeholder [${padNum(proj.id)}]`,
+                category: "Web Application",
+                coverImage: "",
+                images: ["", "", "", "", "", "", "", "", "", ""]
+            };
+            delete sessionBlobPreviews[`${activeProjectId}-cover`];
+            for (let i = 0; i < 10; i++) delete sessionBlobPreviews[`${activeProjectId}-img-${i}`];
+            saveState();
+            renderAll();
+        }
+
+        function updateSingleSlotThumbnail(slotIdx) {
+            const proj = getCurrentProject();
+            const thumbContainer = document.getElementById(`slot-thumb-${slotIdx}`);
+            if (!thumbContainer) return;
+
+            const blobKey = `${activeProjectId}-img-${slotIdx}`;
+            const src = sessionBlobPreviews[blobKey] || proj.images[slotIdx];
+
+            if (src && src.trim() !== '') {
+                thumbContainer.innerHTML = `<img src="${escapeHtml(src)}" alt="Preview" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'font-mono text-[9px] text-brand-grey\\'>PATH</span>'">`;
+            } else {
+                thumbContainer.innerHTML = `<span class="font-mono text-[10px] font-bold text-brand-grey">${padNum(slotIdx + 1)}</span>`;
+            }
+        }
+
+        function renderGallerySlots() {
+            const proj = getCurrentProject();
+            const container = document.getElementById('gallery-slots-container');
+
+            container.innerHTML = proj.images.map((imgPath, idx) => {
+                const slotNum = padNum(idx + 1);
+                const blobKey = `${activeProjectId}-img-${idx}`;
+                const previewSrc = sessionBlobPreviews[blobKey] || imgPath;
+                const hasPreview = previewSrc && previewSrc.trim() !== '';
+
+                return `
+                    <div class="flex items-center gap-2 p-2 rounded-xl bg-brand-ivory/80 border border-brand-stone/80 hover:border-brand-taupe/70 transition-colors">
+                        <!-- Mini Thumbnail Preview -->
+                        <div id="slot-thumb-${idx}" class="w-12 h-9 rounded-lg bg-brand-white border border-brand-stone overflow-hidden flex items-center justify-center shrink-0">
+                            ${hasPreview 
+                                ? `<img src="${escapeHtml(previewSrc)}" alt="Slot ${slotNum}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'font-mono text-[9px] text-brand-grey\\'>PATH</span>'">`
+                                : `<span class="font-mono text-[10px] font-bold text-brand-grey">${slotNum}</span>`
+                            }
+                        </div>
+
+                        <!-- Path Input -->
+                        <div class="flex-1 min-w-0">
+                            <input type="text" value="${escapeHtml(imgPath)}" oninput="updateGallerySlotPath(${idx}, this.value)" placeholder="Image ${slotNum} path (e.g. images/p${activeProjectId}-${idx + 1}.jpg)" class="w-full px-2.5 py-1.5 rounded-lg bg-brand-white border border-brand-stone focus:border-brand-taupe outline-none font-mono text-[11px] text-brand-dark">
+                        </div>
+
+                        <!-- Browse File Button -->
+                        <label class="px-2.5 py-1.5 rounded-lg bg-brand-white hover:bg-brand-dark text-brand-dark hover:text-brand-ivory border border-brand-stone text-[11px] font-semibold cursor-pointer transition-colors shrink-0">
+                            Browse
+                            <input type="file" accept="image/*" class="hidden" onchange="handleSingleSlotFileSelect(${idx}, this)">
+                        </label>
+
+                        <!-- Reorder & Clear Controls -->
+                        <div class="flex items-center space-x-0.5 shrink-0">
+                            <button type="button" onclick="moveGallerySlot(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Move up" class="p-1 rounded hover:bg-brand-stone/60 text-brand-slate disabled:opacity-30">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                            </button>
+                            <button type="button" onclick="moveGallerySlot(${idx}, 1)" ${idx === 9 ? 'disabled' : ''} title="Move down" class="p-1 rounded hover:bg-brand-stone/60 text-brand-slate disabled:opacity-30">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <button type="button" onclick="clearGallerySlot(${idx})" title="Clear slot" class="p-1 rounded hover:bg-red-100 text-brand-grey hover:text-red-600">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderEditor() {
+            const proj = getCurrentProject();
+            const numStr = padNum(proj.id);
+
+            document.getElementById('editor-slot-badge').innerText = numStr;
+            document.getElementById('editor-heading').innerText = proj.title;
+            document.getElementById('input-title').value = proj.title;
+            document.getElementById('input-category').value = proj.category;
+            document.getElementById('input-cover').value = proj.coverImage;
+
+            updateEditorStatusBadge();
+            updateCoverPreviewUI();
+            renderGallerySlots();
+        }
+
+        // =====================================================================
+        // RIGHT PANEL: CODE FORMATTING, HIGHLIGHTING & CLIPBOARD ACTIONS
+        // =====================================================================
+        function escapeJsString(str) {
+            return String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '');
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/"/g, '"');
+        }
+
+        function generateSingleProjectPlainCode(proj, isLast = false) {
+            const numStr = padNum(proj.id);
+            const trailingComma = isLast ? '' : ',';
+            const imageLines = proj.images.map((img, i) => {
+                const comma = i < 9 ? ',' : '';
+                return `                "${escapeJsString(img)}"${comma} // Image ${padNum(i + 1)}`;
+            }).join('\n');
+
+            return `        // --- PROJECT ${numStr} ---
+        {
+            id: ${proj.id},
+            title: "${escapeJsString(proj.title)}",
+            category: "${escapeJsString(proj.category)}",
+            coverImage: "${escapeJsString(proj.coverImage)}",
+            images: [
+${imageLines}
+            ]
+        }${trailingComma}`;
+        }
+
+        function generateSyntaxHighlightedHtml(proj) {
+            const numStr = padNum(proj.id);
+            const isLast = proj.id === 30;
+            const trailingComma = isLast ? '' : ',';
+
+            const imageLinesHtml = proj.images.map((img, i) => {
+                const comma = i < 9 ? ',' : '';
+                const valColor = img.trim() !== '' ? 'text-emerald-300' : 'text-brand-silver/60';
+                return `                <span class="${valColor}">"${escapeHtml(escapeJsString(img))}"</span>${comma} <span class="text-brand-grey">// Image ${padNum(i + 1)}</span>`;
+            }).join('\n');
+
+            const coverColor = proj.coverImage.trim() !== '' ? 'text-emerald-300' : 'text-brand-silver/60';
+
+            return `<span class="text-brand-grey">        // --- PROJECT ${numStr} ---</span>
+        {
+            <span class="text-sky-300">id</span>: <span class="text-amber-300">${proj.id}</span>,
+            <span class="text-sky-300">title</span>: <span class="text-emerald-300">"${escapeHtml(escapeJsString(proj.title))}"</span>,
+            <span class="text-sky-300">category</span>: <span class="text-emerald-300">"${escapeHtml(escapeJsString(proj.category))}"</span>,
+            <span class="text-sky-300">coverImage</span>: <span class="${coverColor}">"${escapeHtml(escapeJsString(proj.coverImage))}"</span>,
+            <span class="text-sky-300">images</span>: [
+${imageLinesHtml}
+            ]
+        }${trailingComma}`;
+        }
+
+        function renderCodeOutput() {
+            const proj = getCurrentProject();
+            const numStr = padNum(proj.id);
+
+            document.getElementById('code-panel-filename').innerText = `PROJECT // ${numStr}`;
+            document.getElementById('helper-comment-hint').innerText = `// --- PROJECT ${numStr} ---`;
+            document.getElementById('code-output-pre').innerHTML = generateSyntaxHighlightedHtml(proj);
+        }
+
+        async function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        }
+
+        async function copySingleSnippet() {
+            const proj = getCurrentProject();
+            const snippet = generateSingleProjectPlainCode(proj, proj.id === 30);
+            await copyTextToClipboard(snippet);
+
+            const btn = document.getElementById('btn-copy-single');
+            const label = document.getElementById('btn-copy-single-text');
+            const originalText = label.innerText;
+
+            btn.classList.remove('bg-brand-taupe', 'text-brand-dark');
+            btn.classList.add('bg-emerald-500', 'text-white');
+            label.innerText = 'Copied Project Block to Clipboard!';
+
+            setTimeout(() => {
+                btn.classList.add('bg-brand-taupe', 'text-brand-dark');
+                btn.classList.remove('bg-emerald-500', 'text-white');
+                label.innerText = originalText;
+            }, 1800);
+        }
+
+        async function copyFullArray() {
+            const allBlocks = projectsState.map((p, idx) => generateSingleProjectPlainCode(p, idx === projectsState.length - 1)).join('\n');
+            const fullCode = `    const PROJECTS_DATA = [\n${allBlocks}\n    ];`;
+            await copyTextToClipboard(fullCode);
+
+            const label = document.getElementById('btn-copy-full-text');
+            const originalText = label.innerText;
+            label.innerText = 'Copied Full PROJECTS_DATA Array!';
+
+            setTimeout(() => {
+                label.innerText = originalText;
+            }, 1800);
+        }
+
+        // =====================================================================
+        // INITIAL RENDER
+        // =====================================================================
+        function renderAll() {
+            updateGlobalCounters();
+            renderSlotList();
+            renderEditor();
+            renderCodeOutput();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            renderAll();
+        });
+    </script>
+</body>
+</html>
